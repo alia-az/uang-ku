@@ -1,0 +1,28 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function owner(uid) { return request.auth != null && request.auth.uid == uid; }
+    function validEnvelope() {
+      let d = request.resource.data;
+      return d.keys().hasOnly(['schemaVersion','state','revision','updatedAt'])
+        && d.keys().hasAll(['schemaVersion','state','revision','updatedAt'])
+        && d.schemaVersion == 1 && d.revision is int && d.revision > 0
+        && d.updatedAt == request.time
+        && d.state is map
+        && d.state.keys().hasOnly(['transactions','categories','opening','start','budgets'])
+        && d.state.keys().hasAll(['transactions','categories','opening','start','budgets'])
+        && d.state.transactions is list && d.state.transactions.size() <= 5000
+        && d.state.categories is list && d.state.categories.size() > 0 && d.state.categories.size() <= 200
+        && d.state.opening is int && d.state.opening >= -999999999999 && d.state.opening <= 999999999999
+        && d.state.start is string && d.state.start.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$')
+        && d.state.budgets is map;
+    }
+    match /users/{uid}/finance/state {
+      allow read: if owner(uid);
+      allow create: if owner(uid) && validEnvelope() && request.resource.data.revision == 1;
+      allow update: if owner(uid) && validEnvelope() && request.resource.data.revision == resource.data.revision + 1;
+      allow delete: if false;
+    }
+    match /{document=**} { allow read, write: if false; }
+  }
+}
