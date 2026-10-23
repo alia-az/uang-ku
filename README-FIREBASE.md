@@ -162,3 +162,6 @@ Grafik menunjukkan saldo terkonfirmasi / target; setoran pending tidak dihitung.
 
 ## Identitas copia.
 Nama tampilan diganti menjadi copia. Logo SVG monogram c + titik diterapkan pada header, kartu saldo, login, PIN dan favicon. SVG merupakan adaptasi vektor sederhana dari konsep logo, dengan wordmark font aplikasi. Penyimpanan tema/PIN lama tetap dipertahankan agar pengaturan tidak hilang. Proyek Firebase dan rules tidak berubah. Sertakan copia-icon.svg dan copia-logo.svg saat mengunggah ke GitHub.
+
+## Halaman khusus Tabungan
+Beranda tetap mempertahankan semua komponen sebelumnya; ditambahkan tombol Pusat tabungan sebelum ringkasan tabungan. Tekan tombol untuk membuka halaman khusus dengan tab Target pribadi dan Tabungan bersama. Tombol Kembali ke Beranda mengembalikan tampilan utama. Data, rules, alur undangan, PIN dan perhitungan saldo tidak berubah. Halaman memakai navigasi internal aplikasi tanpa path baru sehingga tetap cocok dengan GitHub Pages.
