@@ -9,19 +9,106 @@ service cloud.firestore {
         && d.schemaVersion == 1 && d.revision is int && d.revision > 0
         && d.updatedAt == request.time
         && d.state is map
-        && d.state.keys().hasOnly(['transactions','categories','opening','start','budgets'])
+        && d.state.keys().hasOnly(['transactions','categories','opening','start','budgets','goals'])
         && d.state.keys().hasAll(['transactions','categories','opening','start','budgets'])
         && d.state.transactions is list && d.state.transactions.size() <= 5000
         && d.state.categories is list && d.state.categories.size() > 0 && d.state.categories.size() <= 200
         && d.state.opening is int && d.state.opening >= -999999999999 && d.state.opening <= 999999999999
         && d.state.start is string && d.state.start.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$')
-        && d.state.budgets is map;
+        && d.state.budgets is map
+        && (!('goals' in d.state) || (d.state.goals is list && d.state.goals.size() <= 100));
     }
     match /users/{uid}/finance/state {
       allow read: if owner(uid);
       allow create: if owner(uid) && validEnvelope() && request.resource.data.revision == 1;
       allow update: if owner(uid) && validEnvelope() && request.resource.data.revision == resource.data.revision + 1;
       allow delete: if false;
+    }
+    function signedIn() { return request.auth != null; }
+    function groupData(gid) { return get(/databases/$(database)/documents/sharedGoals/$(gid)).data; }
+    function member(gid) { return signedIn() && request.auth.uid in groupData(gid).memberIds; }
+    function groupOwner(gid) { return signedIn() && request.auth.uid == groupData(gid).ownerId; }
+    function validGroup(d) {
+      return d.keys().hasAll(['name','target','due','custody','ownerId','memberIds','inviteCode','joinProof','balance','lastEntryId','createdAt'])
+        && d.keys().hasOnly(['name','target','due','custody','ownerId','memberIds','inviteCode','joinProof','balance','lastEntryId','createdAt'])
+        && d.name is string && d.name.size() > 0 && d.name.size() <= 100
+        && d.target is int && d.target > 0 && d.target <= 999999999999
+        && d.due is string && (d.due == '' || d.due.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$'))
+        && d.custody is string && d.custody.size() > 0 && d.custody.size() <= 200
+        && d.memberIds is list && d.memberIds.size() > 0 && d.memberIds.size() <= 50
+        && d.ownerId in d.memberIds && d.inviteCode is string && d.inviteCode.size() >= 20
+        && d.joinProof is string && d.balance is int && d.balance >= 0 && d.balance <= 999999999999
+        && d.lastEntryId is string && d.createdAt is timestamp;
+    }
+    match /sharedInvites/{code} {
+      allow get: if signedIn();
+      allow list: if false;
+      allow create: if signedIn()
+        && request.resource.data.keys().hasOnly(['groupId','name','active','expiresAt','ownerId'])
+        && request.resource.data.ownerId == request.auth.uid
+        && request.resource.data.active == true
+        && request.resource.data.expiresAt is timestamp
+        && request.resource.data.expiresAt > request.time
+        && request.resource.data.expiresAt <= request.time + duration.value(7, 'd')
+        && getAfter(/databases/$(database)/documents/sharedGoals/$(request.resource.data.groupId)).data.ownerId == request.auth.uid
+        && getAfter(/databases/$(database)/documents/sharedGoals/$(request.resource.data.groupId)).data.inviteCode == code
+        && request.resource.data.name == getAfter(/databases/$(database)/documents/sharedGoals/$(request.resource.data.groupId)).data.name;
+      allow update: if signedIn() && resource.data.ownerId == request.auth.uid
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['active'])
+        && request.resource.data.active == false;
+      allow delete: if false;
+    }
+    match /sharedGoals/{gid} {
+      allow read: if signedIn() && request.auth.uid in resource.data.memberIds;
+      allow create: if signedIn() && validGroup(request.resource.data)
+        && request.resource.data.ownerId == request.auth.uid
+        && request.resource.data.memberIds == [request.auth.uid]
+        && request.resource.data.balance == 0 && request.resource.data.lastEntryId == ''
+        && request.resource.data.joinProof == '' && request.resource.data.createdAt == request.time;
+      function joins() {
+        let d = request.resource.data;
+        let invite = get(/databases/$(database)/documents/sharedInvites/$(d.joinProof)).data;
+        return !(request.auth.uid in resource.data.memberIds)
+          && d.diff(resource.data).affectedKeys().hasOnly(['memberIds','joinProof'])
+          && d.memberIds == resource.data.memberIds.concat([request.auth.uid])
+          && d.joinProof == resource.data.inviteCode
+          && invite.groupId == gid && invite.active == true && invite.expiresAt > request.time;
+      }
+      function confirms() {
+        let d = request.resource.data;
+        let before = get(/databases/$(database)/documents/sharedGoals/$(gid)/entries/$(d.lastEntryId)).data;
+        let after = getAfter(/databases/$(database)/documents/sharedGoals/$(gid)/entries/$(d.lastEntryId)).data;
+        return d.diff(resource.data).affectedKeys().hasOnly(['balance','lastEntryId'])
+          && before.status == 'pending' && after.status == 'confirmed'
+          && d.balance == resource.data.balance + before.amount;
+      }
+      allow update: if signedIn() && validGroup(request.resource.data)
+        && ((resource.data.ownerId == request.auth.uid
+          && (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['inviteCode']) || confirms())) || joins());
+      allow delete: if false;
+      match /entries/{eid} {
+        function validEntry(d) {
+          return d.keys().hasOnly(['uid','displayName','amount','date','note','status','createdAt','reviewedAt'])
+            && d.keys().hasAll(['uid','displayName','amount','date','note','status','createdAt','reviewedAt'])
+            && d.uid is string && d.displayName is string && d.displayName.size() > 0 && d.displayName.size() <= 100
+            && d.amount is int && d.amount != 0 && d.amount >= -999999999999 && d.amount <= 999999999999
+            && d.date is string && d.date.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$')
+            && d.note is string && d.note.size() <= 300 && d.createdAt is timestamp;
+        }
+        allow read: if member(gid);
+        allow create: if member(gid) && validEntry(request.resource.data)
+          && request.resource.data.uid == request.auth.uid && request.resource.data.status == 'pending'
+          && request.resource.data.reviewedAt == null && request.resource.data.createdAt == request.time
+          && (request.resource.data.amount > 0 || groupOwner(gid));
+        allow update: if groupOwner(gid) && resource.data.status == 'pending'
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status','reviewedAt'])
+          && request.resource.data.reviewedAt == request.time
+          && (request.resource.data.status == 'rejected' ||
+            (request.resource.data.status == 'confirmed'
+              && getAfter(/databases/$(database)/documents/sharedGoals/$(gid)).data.lastEntryId == eid
+              && getAfter(/databases/$(database)/documents/sharedGoals/$(gid)).data.balance == groupData(gid).balance + resource.data.amount));
+        allow delete: if false;
+      }
     }
     match /{document=**} { allow read, write: if false; }
   }

@@ -11,6 +11,15 @@ export function validateState(s) {
   for(const [m,b] of Object.entries(s.budgets||{})){
     if(!/^\d{4}-(0[1-9]|1[0-2])$/.test(m)||!b||typeof b!=='object'||Array.isArray(b)||Object.values(b).some(n=>!Number.isSafeInteger(n)||n<0||n>999999999999))throw new Error('DATA_INVALID');
   }
+  if(s.goals!==undefined){
+    if(!Array.isArray(s.goals)||s.goals.length>100)throw Error('DATA_INVALID');
+    const ids=new Set();
+    for(const g of s.goals){
+      if(!g||typeof g.id!=='string'||!/^[A-Za-z0-9_-]+$/.test(g.id)||ids.has(g.id)||typeof g.name!=='string'||!g.name.trim()||g.name.length>100||!Number.isSafeInteger(g.target)||g.target<=0||g.target>999999999999||typeof g.due!=='string'||g.due&&!validDate(g.due)||!Array.isArray(g.entries)||g.entries.length>5000)throw Error('DATA_INVALID');
+      ids.add(g.id);let saved=0;const entries=new Set();
+      for(const e of g.entries){if(!e||typeof e.id!=='string'||!/^[A-Za-z0-9_-]+$/.test(e.id)||entries.has(e.id)||!validDate(e.date)||!Number.isSafeInteger(e.amount)||e.amount===0||Math.abs(e.amount)>999999999999||typeof e.note!=='string'||e.note.length>300)throw Error('DATA_INVALID');entries.add(e.id);saved+=e.amount;if(!Number.isSafeInteger(saved)||saved<0||saved>999999999999)throw Error('DATA_INVALID');}
+    }
+  }
   if(new TextEncoder().encode(JSON.stringify(s)).length>MAX_STATE_BYTES)throw new Error('DATA_TOO_LARGE');
   return s;
 }
