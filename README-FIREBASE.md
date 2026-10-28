@@ -165,3 +165,13 @@ Nama tampilan diganti menjadi copia. Logo SVG monogram c + titik diterapkan pada
 
 ## Halaman khusus Tabungan
 Beranda tetap mempertahankan semua komponen sebelumnya; ditambahkan tombol Pusat tabungan sebelum ringkasan tabungan. Tekan tombol untuk membuka halaman khusus dengan tab Target pribadi dan Tabungan bersama. Tombol Kembali ke Beranda mengembalikan tampilan utama. Data, rules, alur undangan, PIN dan perhitungan saldo tidak berubah. Halaman memakai navigasi internal aplikasi tanpa path baru sehingga tetap cocok dengan GitHub Pages.
+
+## Sembunyikan saldo — 26 Oktober 2026
+Ikon mata di samping Saldo tersedia menyembunyikan nominal saldo, saldo awal, dan selisih pada seluruh kartu carousel. Pilihan diingat lokal per browser dengan kunci copia-hide-balance. Ikon mata ditekan lagi untuk menampilkan nominal. Ini privasi tampilan kartu saldo; nominal pada transaksi, grafik, analisis dan tabungan tetap terlihat. Tidak mengubah data/perhitungan dan tidak menggantikan PIN. Rules tidak berubah.
+
+
+## Update: kode pendek & profil
+- Publish ulang isi `firestore.rules` di Firebase Console → Firestore Database → Rules → Publish sebelum memakai kode 8 karakter.
+- Undang anggota → Salin kode. Teman login → Tabungan → Gabung dengan kode → Periksa → Terima. Kode berlaku 7 hari; Buat kode baru mencabut yang lama. Undangan panjang sebelumnya tetap dapat dipakai; pemilik dapat menggantinya dengan kode pendek.
+- Menu Akun → Nama tampilan → Simpan nama. Sapaan otomatis mengikuti nama Firebase Authentication; Google memakai nama akun awal. Perubahan tidak mengganti nama akun Google. Catatan kontribusi lama tetap memakai nama saat dicatat.
+- Login email baru meminta nama tampilan. Akun lama tanpa nama memakai awalan email sampai diubah.
