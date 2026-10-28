@@ -175,3 +175,37 @@ Ikon mata di samping Saldo tersedia menyembunyikan nominal saldo, saldo awal, da
 - Undang anggota → Salin kode. Teman login → Tabungan → Gabung dengan kode → Periksa → Terima. Kode berlaku 7 hari; Buat kode baru mencabut yang lama. Undangan panjang sebelumnya tetap dapat dipakai; pemilik dapat menggantinya dengan kode pendek.
 - Menu Akun → Nama tampilan → Simpan nama. Sapaan otomatis mengikuti nama Firebase Authentication; Google memakai nama akun awal. Perubahan tidak mengganti nama akun Google. Catatan kontribusi lama tetap memakai nama saat dicatat.
 - Login email baru meminta nama tampilan. Akun lama tanpa nama memakai awalan email sampai diubah.
+
+
+## Update beranda & anggaran
+- Kartu utama selalu menampilkan saldo hari ini dikurangi alokasi target pribadi. Angka tidak berubah ketika memilih bulan rekap; transaksi bertanggal setelah hari ini belum masuk saldo hari ini. Nilai negatif tetap ditampilkan sebagai peringatan.
+- Rekap pemasukan/pengeluaran, grafik, transaksi terbaru, dan anggaran mengikuti bulan pilihan. Riwayat saldo bulanan tetap tersedia melalui bagian “Saldo per bulan”. Saldo historis tidak dikurangi alokasi target saat ini.
+- Beranda menampilkan tiga kategori anggaran dengan rasio pemakaian tertinggi. Buka Anggaran untuk seluruh kategori atau Atur anggaran untuk mengubah batas. Status: Aman <80%, Mendekati batas >=80% dan <100%, Batas tercapai =100%, Melebihi >100%.
+- Total terpakai hanya mencakup kategori yang mempunyai anggaran. Pengeluaran kategori tanpa anggaran ditampilkan terpisah. Anggaran bukan pengurangan saldo.
+- Target pribadi dan tabungan bersama berada di halaman Tabungan; distribusi kategori lengkap di Analisis. Fitur lama tetap tersedia. Tidak ada perubahan skema data atau Firestore Rules pada revisi ini.
+
+
+## Penyempurnaan visual pintasan
+Tiga pintasan beranda kini memakai kartu dengan ikon dan keterangan singkat. Pemasukan pada nominal, grafik bulanan, serta legenda memakai warna biru. Status anggaran dan warna kategori tetap terpisah. Tidak ada perubahan data atau Firestore Rules.
+
+
+## Liquid Glass
+Tema kaca tersedia melalui liquid-glass.css, dimuat setelah style.css. Efek blur memakai backdrop-filter dan -webkit-backdrop-filter, dengan fallback jika tidak didukung. Mode gelap, reduced motion, dan reduced transparency disertakan. Tidak ada animasi latar terus-menerus. Tidak ada perubahan perhitungan, penyimpanan, PIN, login, atau Firestore Rules. Untuk kembali ke tampilan sebelumnya, hapus link liquid-glass.css dari index.html.
+
+Untuk mencoba tampilan tanpa login, buka preview.html. Data contoh tidak tersimpan dan tidak terhubung Firebase; aplikasi asli tetap index.html.
+
+
+## PWA iPhone
+Baca PANDUAN-PWA.md untuk langkah upload dan pemasangan. Manifest, ikon PNG, service worker khusus halaman offline publik, petunjuk instal, indikator offline, dan update dengan tombol persetujuan disertakan. Transaksi tetap membutuhkan internet.
+
+
+## Fix menu pada login/PIN
+Navigasi dimulai tersembunyi dan inert, dikosongkan saat sesi dibersihkan/dikunci, dan memakai aturan hidden yang mengalahkan display grid/flex. Membuka dan submit form transaksi juga memeriksa status kunci. Upload ulang seluruh source. Tidak ada perubahan Firestore Rules.
+
+
+## Dark Glass netral
+Dark mode memakai charcoal dan lapisan kaca abu-abu transparan. Warna dipakai terbatas sebagai aksen data. Tema terang tetap sama. Fix menu login/PIN serta fitur PWA tetap disertakan.
+
+
+## Dark Glass pink–biru
+Kartu saldo dark mode kembali pink dengan teks gelap. Pintasan, ringkasan, navigasi, dan grafik memakai aksen pink–biru lembut di atas charcoal. Tema terang tetap sama.

@@ -22,7 +22,7 @@ const friendly=e=>({
   'auth/network-request-failed':'Tidak dapat terhubung. Periksa internet.',
   'auth/operation-not-allowed':'Aktifkan provider login yang digunakan di Firebase Authentication.',
   'permission-denied':'Akses ditolak. Periksa Firestore Rules untuk akun ini.',
-  'unavailable':'Firestore tidak dapat dihubungi. Periksa internet.',
+  'unavailable':'Tidak terhubung. Data belum disimpan; sambungkan internet lalu coba lagi.',
   'CONFLICT':'Ada perubahan dari perangkat lain. Data terbaru sudah dimuat; periksa lalu simpan ulang.',
   'DATA_TOO_LARGE':'Data mendekati kapasitas versi ini (800 KiB). Ekspor cadangan; gunakan skema koleksi terpisah untuk data lebih besar.',
   'DATA_INVALID':'Data tidak valid. Periksa tanggal, nominal, kategori, dan ID transaksi.',
@@ -60,6 +60,7 @@ async function loadUser(user){
   }catch(e){if(token===session)showError(friendly(e));}
 }
 window.cloudStorage={save:async next=>{
+  if(navigator.onLine===false)throw Object.assign(new Error('unavailable'),{code:'unavailable'});
   if(pinLock.isLocked()||!currentUser||!ref)throw new Error('AUTH_CHANGED');validateState(next);
   const token=session,target=ref,expected=revision;
   writing=true;pending=null;

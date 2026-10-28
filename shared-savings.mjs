@@ -8,7 +8,7 @@ export function sharedCircle(g,entries){const p=sharedProgress(g.balance,g.targe
 export function installSharedSavings({api,fs,user,allowed,ui}){
  const $=s=>document.querySelector(s),esc=ui.esc,money=n=>new Intl.NumberFormat('id-ID',{style:'currency',currency:'IDR',maximumFractionDigits:0}).format(n),now=()=>new Date().toISOString().slice(0,10);
  let groups=[],stop=null,epoch=0,busy=false;
- const guard=()=>{if(!user()||!allowed())throw Error('Buka kunci aplikasi terlebih dahulu.');return user()};
+ const guard=()=>{if(navigator.onLine===false)throw Error('Tidak terhubung. Sambungkan internet sebelum mengubah tabungan bersama.');if(!user()||!allowed())throw Error('Buka kunci aplikasi terlebih dahulu.');return user()};
  const error=e=>e.code==='permission-denied'?'Akses ditolak. Publish Firestore Rules terbaru dan periksa keanggotaan.':e.message||'Operasi gagal.';
  const run=async action=>{if(busy)return;busy=true;try{guard();await action();}catch(e){ui.toast(error(e))}finally{busy=false}};
  const modal=html=>{guard();$('#modal').innerHTML=html;if(!$('#modal').open)$('#modal').showModal()};
